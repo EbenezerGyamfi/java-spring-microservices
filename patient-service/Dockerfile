@@ -21,14 +21,20 @@ RUN mvn clean package
 # for runnig the code we a jdk
 
 FROM openjdk:21-jdk AS runner 
+ 
 
 WORKDIR /app
 
 
+# change the ownership of the /app directory to a non-root user
+RUN useradd appuser && chown -R appuser /app
+
+USER appuser
+
 
 # copy the jar file from the build stage
 # this is the jar file that was created in the build stage
-COPY --from=builder ./app/target/patient-service-0.0.1-SNAPSHOT.jar ./app.jar
+COPY --from=builder /app/target/*.jar app.jar
 
 EXPOSE 4000
 
