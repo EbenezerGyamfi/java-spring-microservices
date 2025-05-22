@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    container_name: patient-service-db
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: patient
+    networks:
+      - patient-service-network
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  patient-service:
+    image: patient-service
+    container_name: patient-service
+    depends_on:
+      - db
+    ports:
+      - "9000:4000"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/patient
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: password
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_SQL_INIT_MODE: always
+    networks:
+      - patient-service-network
+
+networks:
+  patient-service-network:
+
+volumes:
+  db-data:

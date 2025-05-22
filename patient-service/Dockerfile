@@ -1,69 +1,39 @@
-# build tools to user 
+# Stage 1: Build the application
 FROM maven:3.9.9-eclipse-temurin-21 AS builder
 
-
-#working directory
 WORKDIR /app
 
-#dependency management
+# Copy Maven configuration and resolve dependencies
 COPY pom.xml .
+RUN mvn dependency:go-offline -B
 
-
-#go offline caches the dependencies unless a change has been detected
- RUN mvn dependency:go-offline -B
-
-# copy the source code
+# Copy the rest of the source
 COPY src ./src
 
-#build the application for the docker image
+# Build the project (skip tests to speed up CI builds, optional)
 RUN mvn clean package
 
-# for runnig the code we a jdk
+# Stage 2: Run the application
+# Use a smaller JDK or even JRE-based image
+FROM eclipse-temurin:21-jre-alpine AS runner
 
-FROM openjdk:21-jdk AS runner 
- 
-
+# Create app directory
 WORKDIR /app
 
+# Create non-root user
+RUN adduser -D -u 1000 appuser
 
-# change the ownership of the /app directory to a non-root user
-RUN useradd appuser && chown -R appuser /app
-
-USER appuser
-
-
-# copy the jar file from the build stage
-# this is the jar file that was created in the build stage
+# Copy only the final JAR (not the entire /target)
 COPY --from=builder /app/target/*.jar app.jar
 
+# Make sure the JAR is readable
+RUN chmod 644 app.jar && chown -R appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
 EXPOSE 4000
 
-# run the application
+# Run the app
 ENTRYPOINT ["java", "-jar", "app.jar"]
-
-
-
-
-
-
-# FROM maven:3.9.9-eclipse-temurin-21 AS builder
-
-# WORKDIR /app
-
-# COPY pom.xml .
-
-# RUN mvn dependency:go-offline -B
-
-# COPY src ./src
-
-# RUN mvn clean package
-
-# FROM openjdk:21-jdk AS runner
-
-# WORKDIR /app
-
-# COPY --from=builder ./app/target/patient-service-0.0.1-SNAPSHOT.jar ./app.jar
-
-# EXPOSE 4000
-
-# ENTRYPOINT ["java", "-jar", "app.jar"]
