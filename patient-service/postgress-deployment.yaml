@@ -3,6 +3,7 @@ kind: Deployment
 metadata:
   name: postgres-deployment
 spec:
+  replicas: 1
   selector:
     matchLabels:
       app: postgres-db
@@ -11,13 +12,35 @@ spec:
       labels:
         app: postgres-db
     spec:
-      replicas: 2
       containers:
-      - name: postrgres-db
-        image: postgres
-        resources:
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 5432
+        - name: postgres-db  # ✅ fixed typo
+          image: postgres
+          volumeMounts:
+            - mountPath: /var/lib/postgresql/data
+              name: data
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: patient-config
+                  key: POSTGRES_USER 
+            - name: POSTGRES_PASSWORD
+              valueFrom: 
+                configMapKeyRef:
+                  name: patient-config
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: patient-config
+                  key: POSTGRES_DB
+          resources:
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+          ports:
+            - containerPort: 5432
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: patient-pvc

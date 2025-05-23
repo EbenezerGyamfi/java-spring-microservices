@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: patient-pvc
+spec:
+  volumeName: patient-pv
+  storageClassName: standard
+  resources:
+    requests:
+    # if you have multiple replicas, you need to decrese the size of the PVC storage
+    # to be less than the size of the PV storage
+      storage: 1Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
