@@ -2,6 +2,9 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgres-deployment
+  annotations:
+    kubernetes.io/change-cause: "Deployment for PostgreSQL database"
+    description: "Deployment for PostgreSQL database used by patient service"
 spec:
   replicas: 1
   selector:
@@ -13,7 +16,7 @@ spec:
         app: postgres-db
     spec:
       containers:
-        - name: postgres-db  # ✅ fixed typo
+        - name: postgres-db  #
           image: postgres
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
